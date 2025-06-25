@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Configuración del Juego</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #FFFFFF;
+      margin: 0;
+      padding: 20px;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      max-width: 800px;
+      width: 100%;
+      background-color: #FFFFFF;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      box-sizing: border-box;
+    }
+
+    input, button, select {
+      padding: 10px;
+      margin: 10px 0;
+      width: calc(100% - 22px);
+      box-sizing: border-box;
+      border-radius: 25px;
+      border: 2px solid #ffffff;
+    }
+
+    #levels option {
+      font-size: 56px; /* Ajusté el tamaño de la fuente para que sea más adecuado */
+    }
+
+    button {
+      background-color: #FFBC00;
+      color: #000000;
+      cursor: pointer;
+      border: none;
+    }
+
+    .step-config {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      background-color: #FFBC00;
+      margin: 10px auto;
+      border-radius: 25px;
+      width: 100%;
+      color: #000000;
+      border: 2px solid #ffffff;
+      box-sizing: border-box;
+    }
+
+    .step-config input {
+      width: 60%;
+      background-color: transparent;
+      border: none;
+      color: #000000;
+    }
+
+    .step-config button {
+      width: auto;
+      margin-left: 5px;
+      background-color: #07fc44;
+    }
+
+    @media (max-width: 600px) {
+      .step-config {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .step-config input {
+        width: 100%;
+        margin-bottom: 10px;
+      }
+
+      .step-config button {
+        width: 100%;
+        margin: 5px 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Configuración del Juego</h1>
+
+    <div>
+      <label for="game-title">Título del Juego:</label>
+      <input type="text" id="game-title" placeholder="Ingrese el título del juego">
+    </div>
+
+    <div>
+      <label for="new-step">Agregar Nuevo Paso:</label>
+      <input type="text" id="new-step" placeholder="Ingrese el texto del nuevo paso">
+      <button id="add-step">Agregar Paso</button>
+    </div>
+
+    <div id="steps-container"></div>
+
+    <div>
+      <button id="save-level">Guardar como Nuevo Nivel</button>
+    </div>
+
+    <div>
+      <label for="levels">Seleccionar Nivel:</label>
+      <select id="levels">
+        <option value="">Seleccione un nivel</option>
+        <option value="cafe">Preparación del Café</option>
+        <option value="tareas">Tareas Domésticas</option>
+        <option value="ejercicio">Rutina de Ejercicio</option>
+      </select>
+      <button id="load-level">Cargar Nivel</button>
+    </div>
+
+    <button id="save-config">Guardar Configuración</button>
+  </div>
+
+  <script>
+    // El script permanece igual
+    const stepsContainer = document.getElementById('steps-container');
+    const addStepButton = document.getElementById('add-step');
+    const newStepInput = document.getElementById('new-step');
+    const saveConfigButton = document.getElementById('save-config');
+    const loadLevelButton = document.getElementById('load-level');
+    const saveLevelButton = document.getElementById('save-level');
+    const levelsSelect = document.getElementById('levels');
+
+    let steps = [];
+
+    // Agregar nuevo paso
+    addStepButton.addEventListener('click', () => {
+      const stepText = newStepInput.value.trim();
+      if (stepText) {
+        const stepId = 'step-' + Date.now();
+        steps.push({ id: stepId, text: stepText });
+        renderSteps();
+        stepsContainer.style.display = 'block';
+        newStepInput.value = '';
+      }
+    });
+
+    function renderSteps() {
+      stepsContainer.innerHTML = '';
+      steps.forEach(step => {
+        const stepElement = document.createElement('div');
+        stepElement.className = 'step-config';
+        stepElement.innerHTML = `
+          <input type="text" value="${step.text}" data-id="${step.id}" readonly>
+          <button class="edit-step" data-id="${step.id}">Editar</button>
+          <button class="delete-step" data-id="${step.id}">Eliminar</button>
+        `;
+        stepsContainer.appendChild(stepElement);
+      });
+
+      document.querySelectorAll('.edit-step').forEach(button => {
+        button.addEventListener('click', (e) => {
+          const stepId = e.target.getAttribute('data-id');
+          const input = e.target.parentElement.querySelector('input');
+          input.removeAttribute('readonly');
+          input.focus();
+
+          input.addEventListener('blur', () => {
+            const newText = input.value;
+            updateStep(stepId, newText);
+            input.setAttribute('readonly', true);
+          });
+
+          input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+              const newText = input.value;
+              updateStep(stepId, newText);
+              input.setAttribute('readonly', true);
+            }
+          });
+        });
+      });
+
+      document.querySelectorAll('.delete-step').forEach(button => {
+        button.addEventListener('click', (e) => {
+          const stepId = e.target.getAttribute('data-id');
+          deleteStep(stepId);
+        });
+      });
+    }
+
+    function updateStep(stepId, newText) {
+      steps = steps.map(step => step.id === stepId ? { ...step, text: newText } : step);
+    }
+
+    function deleteStep(stepId) {
+      steps = steps.filter(step => step.id !== stepId);
+      renderSteps();
+    }
+
+    saveConfigButton.addEventListener('click', () => {
+      const gameTitle = document.getElementById('game-title').value;
+      const config = { title: gameTitle, steps: steps };
+      localStorage.setItem('gameConfig', JSON.stringify(config));
+      alert('Configuración guardada');
+    });
+
+    loadLevelButton.addEventListener('click', () => {
+      const level = levelsSelect.value;
+      if (!level) {
+        alert('Por favor, seleccione un nivel.');
+        return;
+      }
+
+      let levelSteps = [];
+
+      if (level === 'cafe') {
+        levelSteps = [
+          { id: 'step-' + Date.now(), text: '1.Hervir agua' },
+          { id: 'step-' + (Date.now() + 1), text: '2.Añadir café al filtro' },
+          { id: 'step-' + (Date.now() + 2), text: '3.Verter agua caliente' },
+          { id: 'step-' + (Date.now() + 3), text: '4.Servir el café' }
+        ];
+      } else if (level === 'tareas') {
+        levelSteps = [
+          { id: 'step-' + Date.now(), text: '1.Barrer el piso' },
+          { id: 'step-' + (Date.now() + 1), text: '2.Limpiar el polvo' },
+          { id: 'step-' + (Date.now() + 2), text: '3.Lavar los platos' },
+          { id: 'step-' + (Date.now() + 3), text: '4.Sacar la basura' }
+        ];
+      } else if (level === 'ejercicio') {
+        levelSteps = [
+          { id: 'step-' + Date.now(), text: '1.Calentamiento' },
+          { id: 'step-' + (Date.now() + 1), text: '2.Ejercicio cardiovascular' },
+          { id: 'step-' + (Date.now() + 2), text: '3.Entrenamiento de fuerza' },
+          { id: 'step-' + (Date.now() + 3), text: '4.Enfriamiento' }
+        ];
+      } else {
+        // Nivel personalizado
+        const customLevels = JSON.parse(localStorage.getItem('customLevels')) || {};
+        if (customLevels[level]) {
+          levelSteps = customLevels[level];
+        }
+      }
+
+      steps = levelSteps;
+      renderSteps();
+      stepsContainer.style.display = 'block';
+    });
+
+    // Guardar como nuevo nivel
+    saveLevelButton.addEventListener('click', () => {
+      const levelName = prompt("Ingrese el nombre del nuevo nivel:");
+      if (!levelName) return;
+
+      let customLevels = JSON.parse(localStorage.getItem('customLevels')) || {};
+      customLevels[levelName] = steps;
+      localStorage.setItem('customLevels', JSON.stringify(customLevels));
+
+      const newOption = document.createElement('option');
+      newOption.value = levelName;
+      newOption.textContent = levelName;
+      levelsSelect.appendChild(newOption);
+
+      alert(`Nivel "${levelName}" guardado correctamente.`);
+    });
+
+    // Al cargar, restaurar título y niveles personalizados
+    const savedConfig = JSON.parse(localStorage.getItem('gameConfig'));
+    if (savedConfig) {
+      document.getElementById('game-title').value = savedConfig.title || '';
+    }
+
+    const customLevels = JSON.parse(localStorage.getItem('customLevels')) || {};
+    Object.keys(customLevels).forEach(name => {
+      const option = document.createElement('option');
+      option.value = name;
+      option.textContent = name;
+      levelsSelect.appendChild(option);
+    });
+  </script>
+</body>
+</html>
